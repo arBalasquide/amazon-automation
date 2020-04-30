@@ -20,7 +20,7 @@ CART_URL = 'https://www.amazon.com/gp/cart/view.html/ref=nav_cart'
 ACCEPT_SHOP = 'Amazon'
 LIMIT_VALUE = 320      # Max price
 
-TIME_OUT = 5 # How often you want to check for changes
+TIME_OUT = 60 # How often you want to check for changes
 
 def l(str):
     print("%s : %s"%(datetime.now().strftime("%Y/%m/%d %H:%M:%S"),str))
@@ -47,15 +47,15 @@ if __name__ == '__main__':
                 b.get(ITEM_URL)
         while True:
             try:
-                # Confirm seller
-                shop = b.find_element_by_id('merchant-info').text
-                shop = shop.split('Ships from and sold by ')[1] # may not work for other shops
+                # Confirm seller - Uncomment if you care about store
+                #shop = b.find_element_by_id('merchant-info').text
+                #shop = shop.split('Ships from and sold by ')[1] # may not work for other shops
 
-                if ACCEPT_SHOP not in shop:
-                    l("NOT IN AMAZON")
-                    time.sleep(60)
-                    b.refresh()
-                    continue
+                #if ACCEPT_SHOP not in shop:
+                #    l("NOT IN AMAZON")
+                #    time.sleep(60)
+                #    b.refresh()
+                #    continue
 
                 # Add to cart
                 b.find_element_by_id('add-to-cart-button-ubb').click()
@@ -68,7 +68,11 @@ if __name__ == '__main__':
 
         # Go to cart and checkout
         b.get(CART_URL)
-        b.find_element_by_name('proceedToRetailCheckout').click()
+        try: 
+            b.find_element_by_name('proceedToRetailCheckout').click()
+        except:
+            l('CHECKOUT BUTTON NOT FOUND')
+            continue
 
         # Purchase re-log in verification
         try:
@@ -81,8 +85,9 @@ if __name__ == '__main__':
         # Confirm price is not too high
         try:
             p = b.find_element_by_css_selector('td.grand-total-price').text
-            if int(p.replace('$', '').split('.')[0]) > LIMIT_VALUE:
-                l('PRICE IS TOO LARGE. CURRENT PRICE IS', p)
+            if int(p.replace('$', '').replace(',', '').split('.')[0]) > LIMIT_VALUE:
+                l('PRICE IS TOO LARGE. CURRENT PRICE IS: ' + p)
+                time.sleep(TIME_OUT)
                 continue
         except:
             l('EXCEPTION OCCURED. POSSIBLY ADDRESS PROBLEMS.')
