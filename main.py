@@ -14,7 +14,7 @@ options.add_argument("user-data-dir=./profile") # to bypass OTP verification
 
 LOGIN_PASSWORD = os.getenv("LOGIN_PASSWORD")
 
-ITEM_URL = 'https://www.amazon.com/dp/????????/' # Product URL
+ITEM_URL = 'https://www.amazon.com/dp/B07VGRJDFY/' # Product URL
 
 ACCEPT_SHOP = 'Amazon'
 LIMIT_VALUE = 320      # Max price
@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
         # Go to cart and checkout
         b.get('https://www.amazon.com/gp/cart/view.html/ref=nav_cart')
-        b.find_element_by_name('a-button-input').click()
+        b.find_element_by_id('hlb-ptc-btn-native').click()
 
         # Purchase re-log in verification
         try:
