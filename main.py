@@ -15,17 +15,19 @@ options.add_argument("user-data-dir=./profile") # to bypass OTP verification
 LOGIN_PASSWORD = os.getenv("LOGIN_PASSWORD")
 
 ITEM_URL = 'https://www.amazon.com/dp/B07VGRJDFY/' # Product URL
+CART_URL = 'https://www.amazon.com/gp/cart/view.html/ref=nav_cart'
 
 ACCEPT_SHOP = 'Amazon'
 LIMIT_VALUE = 320      # Max price
 
+TIME_OUT = 5 # How often you want to check for changes
 
 def l(str):
     print("%s : %s"%(datetime.now().strftime("%Y/%m/%d %H:%M:%S"),str))
 
 if __name__ == '__main__':
     PURCHASED = False
-
+    EMPTY_CART = True
     # Boot up the browser
     try:
         b = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, options=options)
@@ -33,30 +35,39 @@ if __name__ == '__main__':
     except:
         l('Failed to open browser.')
         exit()
-
+    
     while True and not PURCHASED:
+        # Clear cart, so only 1 desired item is there
+        while not EMPTY_CART:
+            try:
+                b.get(CART_URL)
+                b.find_element_by_xpath("/html/body/div[1]/div[4]/div[1]/div[5]/div/div[2]/div[4]/form/div[2]/div[3]/div[4]/div/div[1]/div/div/div[2]/div/div/div[2]/div[1]/span[2]/span/input").click()
+            except:
+                EMPTY_CART = True
+                b.get(ITEM_URL)
         while True:
             try:
                 # Confirm seller
-                #shop = b.find_element_by_id('merchant-info').text
-                #shop = shop.split('Ships from and sold by ')[1] # may not work for other shops
+                shop = b.find_element_by_id('merchant-info').text
+                shop = shop.split('Ships from and sold by ')[1] # may not work for other shops
 
-                #if ACCEPT_SHOP not in shop:
-                #    l("NOT IN AMAZON")
-                #    time.sleep(60)
-                #    b.refresh()
-                #    continue
+                if ACCEPT_SHOP not in shop:
+                    l("NOT IN AMAZON")
+                    time.sleep(60)
+                    b.refresh()
+                    continue
 
                 # Add to cart
                 b.find_element_by_id('add-to-cart-button-ubb').click()
+                EMPTY_CART = False
                 break
             except:
                 l('EXCEPTION OCCURED.')
-                time.sleep(60)
+                time.sleep(TIME_OUT)
                 b.get(ITEM_URL)
 
         # Go to cart and checkout
-        b.get('https://www.amazon.com/gp/cart/view.html/ref=nav_cart')
+        b.get(CART_URL)
         b.find_element_by_name('proceedToRetailCheckout').click()
 
         # Purchase re-log in verification
@@ -64,7 +75,7 @@ if __name__ == '__main__':
             b.find_element_by_id('ap_password').send_keys(LOGIN_PASSWORD)
             b.find_element_by_id('signInSubmit').click()
         except:
-            l('LOGIN PASS.')
+            l('POSSIBLE LOGIN PROBLEMS.')
             pass
 
         # Confirm price is not too high
@@ -75,6 +86,8 @@ if __name__ == '__main__':
                 continue
         except:
             l('EXCEPTION OCCURED. POSSIBLY ADDRESS PROBLEMS.')
+            time.sleep(TIME_OUT)
+            b.get(ITEM_URL)
             continue
 
         # Accept the order
