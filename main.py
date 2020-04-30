@@ -38,14 +38,14 @@ if __name__ == '__main__':
         while True:
             try:
                 # Confirm seller
-                shop = b.find_element_by_id('merchant-info').text
-                shop = shop.split('Ships from and sold by ')[1] # may not work for other shops
+                #shop = b.find_element_by_id('merchant-info').text
+                #shop = shop.split('Ships from and sold by ')[1] # may not work for other shops
 
-                if ACCEPT_SHOP not in shop:
-                    l("NOT IN AMAZON")
-                    time.sleep(60)
-                    b.refresh()
-                    continue
+                #if ACCEPT_SHOP not in shop:
+                #    l("NOT IN AMAZON")
+                #    time.sleep(60)
+                #    b.refresh()
+                #    continue
 
                 # Add to cart
                 b.find_element_by_id('add-to-cart-button-ubb').click()
@@ -53,11 +53,11 @@ if __name__ == '__main__':
             except:
                 l('EXCEPTION OCCURED.')
                 time.sleep(60)
-                b.refresh()
+                b.get(ITEM_URL)
 
         # Go to cart and checkout
         b.get('https://www.amazon.com/gp/cart/view.html/ref=nav_cart')
-        b.find_element_by_id('hlb-ptc-btn-native').click()
+        b.find_element_by_name('proceedToRetailCheckout').click()
 
         # Purchase re-log in verification
         try:
@@ -68,10 +68,13 @@ if __name__ == '__main__':
             pass
 
         # Confirm price is not too high
-        p = b.find_element_by_css_selector('td.grand-total-price').text
-        if int(p.split(' ')[1].replace(',', '')) > LIMIT_VALUE:
-            print(int(p.split(' ')[1].replace(',', '')))
-            l('PRICE IS TOO LARGE.')
+        try:
+            p = b.find_element_by_css_selector('td.grand-total-price').text
+            if int(p.replace('$', '').split('.')[0]) > LIMIT_VALUE:
+                l('PRICE IS TOO LARGE. CURRENT PRICE IS', p)
+                continue
+        except:
+            l('EXCEPTION OCCURED. POSSIBLY ADDRESS PROBLEMS.')
             continue
 
         # Accept the order
